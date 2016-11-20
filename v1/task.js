@@ -103,6 +103,7 @@ Task.prototype.complete = function(task, creep) {
     if (task) {
         task.step = null;
         task.creep = null;
+        task.nextStep = null;
     }
     if (creep) {
         creep.memory.task = null;
