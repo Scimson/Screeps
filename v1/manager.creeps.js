@@ -12,17 +12,20 @@ var creepsManager = {
     generalistCaste.initialize(Memory[CASTES]);
   },
 
+  getCaste: function(){
+    return generalistCaste;
+  },
+
   operate: function(){
   //  this.clear();
     this.organize();
     this.create();
-    this.assign();
-    this.work();
-    generalistCaste.print();
+    //this.assign();
+    //this.work();
   },
 
   create: function(){
-    if(generalistCaste.size() < 12){
+    if(generalistCaste.size() < 18){
       generalistCaste.create();
     }
   },

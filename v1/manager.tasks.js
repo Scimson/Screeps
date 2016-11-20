@@ -1,73 +1,65 @@
+var mineTask = require("task.mine");
+var buildTask = require("task.build");
+var taskList = [mineTask, buildTask];
+
+var creepManager = require("manager.creeps");
+
 var taskManager = {
   initialize: function(){
-
+    if(!("jobs" in Memory)){
+      Memory.jobs = new Object();
+    }
+    for(var task in taskList){
+      taskList[task].initialize(Memory.jobs);
+    }
   },
 
-  collect: function(creep){
-    if(creep.carry.energy < creep.carryCapacity){
-      var sources = creep.room.find(FIND_SOURCES);
-      if(creep.harvest(sources[0]) == ERR_NOT_IN_RANGE){
-        creep.moveTo(sources[0]);
+  plan: function(){
+    var ids = new Object();
+
+    // Mine Task
+    ids[mineTask.name] = new Object()
+    var sources = Game.spawns.Spawn1.room.find(FIND_SOURCES).slice(0,2);
+    for(var index in sources){
+      var source = sources[index];
+      for(var i = 0; i < 6; i++){
+        var id = source.id + "-" + i;
+        mineTask.createTask(id, source.id);
+        ids[mineTask.name][id] = null;
       }
     }
-    else{
-      creep.memory.task = "deposit";
-      this.deposit(creep);
-    }
-  },
 
-  deposit: function(creep){
-    if(creep.carry.energy > 0){
-      var depots = creep.room.find(FIND_STRUCTURES,{
-        filter: (structure) => {
-          return (structure.structureType == STRUCTURE_EXTENSION || structure.structureType == STRUCTURE_SPAWN) &&
-            structure.energy < structure.energyCapacity;
-        }
-      });
-      if(depots.length > 0){
-        if(creep.transfer(depots[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE){
-          creep.moveTo(depots[0]);
-        }
-      }
-      else{
-          creep.memory.task = "upgrade";
-          this.upgrade(creep);
+    // Build Task
+    ids[buildTask.name] = new Object()
+    var sites = Game.spawns.Spawn1.room.find(FIND_CONSTRUCTION_SITES);
+    for(var index in sites){
+      var site = sites[index];
+      for(var i = 0; i < 1; i++){
+        var id = site.id + "-" + i;
+        buildTask.createTask(id, site.id);
+        ids[buildTask.name][id] = null;
       }
     }
-    else{
-      creep.memory.task = null;
-    }
+
+    // Return
+    return ids;
   },
 
-  upgrade: function(creep){
-    if(creep.carry.energy > 0){
-      var controllers = creep.room.find(FIND_STRUCTURES,{
-        filter: (structure) => {
-          return structure.structureType == STRUCTURE_CONTROLLER;
-        }
-      });
-      if(controllers.length > 0){
-        if(creep.transfer(controllers[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE){
-          creep.moveTo(controllers[0]);
-        }
-      }
+  execute: function(){
+    var ids = this.plan();
+    for(var index in taskList){
+      var task = taskList[index];
+      task.organize(ids[task.name]);
     }
-    else{
-      creep.memory.task = null;  
+    for(var index in taskList){
+      var task = taskList[index];
+      task.assign(creepManager.getCaste());
     }
-  },
-
-  mine: function(creep){
-    if(creep.carry.energy < creep.carryCapacity){
-      creep.memory.task = "collect";
-      this.collect(creep);
+    for(var index in taskList){
+      var task = taskList[index];
+      task.executeAll();
     }
-    else{
-      creep.memory.task = "deposit";
-      this.deposit(creep);
-    }
-  },
-
+  }
 }
 
 module.exports = taskManager;

@@ -1,5 +1,5 @@
 var helper = require("helper");
-var taskManager = require("manager.tasks");
+//var taskManager = require("manager.tasks");
 
 var generalistsCaste = {
 
@@ -33,7 +33,6 @@ var generalistsCaste = {
       console.log("Initialize creating:", this.name)
       this.memory[this.CREATING] = [];
     }
-    this.print();
   },
 
   size: function(){
@@ -77,6 +76,31 @@ var generalistsCaste = {
       }
     }
     this.memory[this.CREATING] = creating;
+    this.reorganize();
+  },
+
+  reorganize: function(){
+    var stillWorking = [];
+    for(var index in this.memory[this.WORKING]){
+      var name = this.memory[this.WORKING][index];
+      var creep = Game.creeps[name];
+      if(!(this.TASK in creep.memory) || !(creep.memory[this.TASK])){
+        this.memory[this.WAITING].push(name);
+      }
+      else{
+        stillWorking.push(name);
+      }
+    }
+    this.memory[this.WORKING] = stillWorking;
+  },
+
+  acquire: function(){
+    if(this.available() > 0){
+      var name = this.memory[this.WAITING].shift();
+      this.memory[this.WORKING].push(name);
+      return name;
+    }
+    return false;
   },
 
   assign: function(task){
@@ -89,7 +113,7 @@ var generalistsCaste = {
     return false;
   },
 
-  work: function(){
+  /*work: function(){
     var stillWorking = [];
     for(var index in this.memory[this.WORKING]){
       var name = this.memory[this.WORKING][index];
@@ -105,7 +129,7 @@ var generalistsCaste = {
       }
     }
     this.memory[this.WORKING] = stillWorking;
-  },
+  },*/
 
   clearGroup: function(group){
     var alive = [];
@@ -121,20 +145,6 @@ var generalistsCaste = {
     }
     this.memory[group] = alive;
   },
-
-  clear: function(){
-    //this.clearGroup(this.CREATING);
-    //this.clearGroup(this.WAITING);
-    //this.clearGroup(this.WORKING);
-  },
-
-  print: function(){
-    console.log("Summary")
-    console.log("size", this.size())
-    console.log(this.CREATING, this.memory[this.CREATING])
-    console.log(this.WORKING, this.memory[this.WORKING])
-    console.log(this.WAITING, this.memory[this.WAITING])
-  }
 }
 
 module.exports = generalistsCaste;
